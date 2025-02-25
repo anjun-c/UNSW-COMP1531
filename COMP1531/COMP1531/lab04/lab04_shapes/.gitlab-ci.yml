@@ -1,0 +1,22 @@
+image: comp1531/automarking:latest
+
+stages:
+  - checks
+
+before_script:
+  - echo 'Add more commands here. This runs before all of your jobs'
+  - echo 'You may want to add commands such as installing dependencies (npm i/npm ci), etc'
+
+testing:
+  stage: checks
+  script:
+    - echo 'Edit your .gitlab-ci.yml to run tests!'
+  only:
+    - master
+
+linting:
+  stage: checks
+  script:
+    - echo 'Edit your .gitlab-ci.yml to run lint!'
+  only:
+    - master

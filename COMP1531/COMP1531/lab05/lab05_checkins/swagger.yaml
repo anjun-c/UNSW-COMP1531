@@ -1,0 +1,316 @@
+openapi: 3.0.3
+info:
+  title: Checkins Server API
+  description: |
+    API for managing visitor check-in events
+
+    Please examine the example return values carefully when writing your tests.
+
+    Moreover, next to the "Example Value" tab is the "Schema" tab, which will explain each attribute/property of an object in further details.
+
+  version: 1.0.0
+servers:
+  - url: "{protocol}://{host}:{port}"
+    variables:
+      protocol:
+        default: http
+      host:
+        default: '127.0.0.1'
+      port:
+        default: '49152'
+
+tags:
+  - name: Sample
+    description: These are sample routes that we've already implemented for you!
+  - name: Events
+    description: Operation on checkin events
+  - name: Other
+    description: Routes that don't fit in any of the categories above
+
+
+paths:
+  /:
+    get:
+      tags:
+        - Sample
+      summary: Displays a message
+      description: This is the root route that has already been implemented for you. It returns a welcome message.
+      responses:
+        '200':
+          description: "Returns a welcome message"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: "Welcome to Lab05 Checkins Server's root URL!"
+
+  /echo/echo:
+    get:
+      tags:
+        - Sample
+      summary: Echo back a message
+      description: |
+        This is a sample echo route that has already been implemented for you.
+        It returns a same message that was given in the query string, although an error is returned if you try to echo "echo".
+      parameters:
+        - name: message
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "helloworld!"
+
+      responses:
+        '200':
+          description: "Echos the same mssage back"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: "Helloworld!"
+        '400':
+          description: |
+            If any of the following is true:
+            - Attempting to echo the message "echo"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Cannot echo 'echo'!"
+  /clear:
+    delete:
+      tags:
+        - Other
+      summary: "Clear all events. Difficulty: ⭐"
+      description: Remove all checkin events from the data store.
+      responses:
+        '200':
+          description: Events cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /events/checkin:
+    post:
+      tags:
+        - Events
+      summary: "Check in a visitor. Difficulty: ⭐"
+      description: Create a new event in the data store, holding information about the visitor's name, age and checkin time.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - visitorName
+                - visitorAge
+              properties:
+                visitorName:
+                  type: string
+                  example: Tam
+                visitorAge:
+                  type: integer
+                  example: 23
+      responses:
+        '200':
+          description: Check-in successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eventId:
+                    type: integer
+                    example: 1
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Age must be 0 or greater.
+
+  /events/list:
+    get:
+      tags:
+        - Events
+      summary: "List events. Difficulty: ⭐"
+      description: |
+        List all events from visitors who have checked in. If a `minAge` is given in the
+        query string of the request only checkin events from visitors whose is equal to
+        or greater than the given `minAge` is returned.
+      parameters:
+        - name: minAge
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 0
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        eventId:
+                          type: integer
+                          example: 1
+                        visitorName:
+                          type: string
+                          example: Tam
+                        visitorAge:
+                          type: integer
+                          example: 23
+                        checkinTime:
+                          type: integer
+                          example: 1624455678
+                          description: Integer unix timestamp (in seconds)
+                        checkoutTime:
+                          type: integer
+                          nullable: true
+                          example: null
+                          description: |
+                            This field has the value of null by default for events that were initially created,
+                            and an integer UNIX timestamp (in seconds) when /events/:eventid/checkout is called.
+        '400':
+          description: Invalid input (negative minAge)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Min age must be 0 or greater
+
+  /events/{eventid}/checkout:
+    post:
+      tags:
+        - Events
+      summary: "Check out a visitor. Difficulty: ⭐"
+      description: Marks the checkout timestamp for an event with a UNIX timestamp
+      parameters:
+        - name: eventid
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Check-out successful
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid event ID or already checked out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "You have already checked out from the event with id: 1"
+
+  /events/{eventid}:
+    put:
+      tags:
+        - Events
+      summary: "Update a visitor event. Difficulty: ⭐"
+      description: Update the name and age of a visitor based on a particular event.
+      parameters:
+        - name: eventid
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - visitorName
+                - visitorAge
+              properties:
+                visitorName:
+                  type: string
+                  example: Edited
+                visitorAge:
+                  type: integer
+                  example: 999
+      responses:
+        '200':
+          description: Update successful
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid input or event ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "No such event with id: 1"
+    delete:
+      tags:
+        - Events
+      summary: "Delete a visitor event. Difficulty: ⭐"
+      description: Given an eventId, remove the corresponding event.
+      parameters:
+        - name: eventid
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Deletion successful
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid event ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "No such event with id: 1"

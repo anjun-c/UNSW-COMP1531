@@ -1,0 +1,27 @@
+{
+  "name": "lab08_objection",
+  "version": "1.0.0",
+  "description": "[TOC]",
+  "main": "src/objection.ts",
+  "scripts": {
+    "ts-node": "ts-node",
+    "ts-node-coverage": "nyc --reporter=text --reporter=lcov ts-node",
+    "test": "jest",
+    "tsc": "tsc --noEmit",
+    "lint": "eslint '**/*.ts'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-jest": "^27.6.3",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

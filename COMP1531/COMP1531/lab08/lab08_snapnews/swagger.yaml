@@ -1,0 +1,483 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service API
+  description: API for managing announcements
+  version: 1.0.0
+servers:
+  - url: "{protocol}://{host}:{port}"
+    variables:
+      protocol:
+        default: http
+      host:
+        default: '127.0.0.1'
+      port:
+        default: '49152'
+
+
+tags:
+  - name: v1 existing
+    description: API version 1, where tokens are sent through query (GET/DELETE, insecure) or body (PUT/POST)
+  - name: v2
+    description: API version 2, where all tokens are consistently and securely sent through the request headers
+  - name: v1 new
+    description: Task 2 scheduling - new v1 routes to implement
+
+paths:
+  /v1/clear:
+    delete:
+      tags:
+        - v1 existing
+      summary: Clear all announcements and timers
+      description: |
+        Reset the data store to the initial state, removing all announcements.
+        If you have any scheduled timers (from setTimeout), they must also be removed.
+      responses:
+        '200':
+          description: Announcements and timers cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+  /v1/announcements/create:
+    post:
+      tags:
+        - v1 existing
+      summary: Create a new announcement
+      description: Given a title and description, create an announcement and return a corresponding announcement ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lab08snapnewstoken:
+                  type: string
+                  description: Token for authentication
+                  example: LAB08_SNAPNEWS_TOKEN_SECRET
+                title:
+                  type: string
+                  description: Title of the announcement
+                  example: "Oleksandr Usyk is the new undisputed champion of the world!"
+                description:
+                  type: string
+                  description: Description of the announcement
+                  example: "Oleksandr Usyk has defeated Tyson Fury to become the first undisputed heavyweight champion in the modern era."
+      responses:
+        '200':
+          description: Announcement created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcementId:
+                    type: integer
+                    example: 1
+        '400':
+          description: |
+            When any of
+            - title is an empty string, ""
+            - description is an empty string, ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Invalid title or description"
+        '401':
+          description: When the given token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: Invalid token provided
+  /v1/announcements/list:
+    get:
+      tags:
+        - v1 existing
+      summary: List all announcements
+      description: Return a list of announcements created, including information on their id, title, content and createdAt (UNIX Timestamp)
+      parameters:
+        - name: lab08snapnewstoken
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Token for authentication
+            example: LAB08_SNAPNEWS_TOKEN_SECRET
+      responses:
+        '200':
+          description: Lists all announcements successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcement'
+        '401':
+          description: When the given token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: Invalid token provided
+  /v1/announcements/{announcementid}:
+    delete:
+      tags:
+        - v1 existing
+      summary: Delete an announcement
+      description: Given an announcement ID, delete the corresponding announcement.
+      parameters:
+        - name: announcementid
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: ID of the announcement to delete
+            example: 0
+        - name: lab08snapnewstoken
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Token for authentication
+            example: LAB08_SNAPNEWS_TOKEN_SECRET
+      responses:
+        '200':
+          description: Deleted announcement successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+        '400':
+          description: |
+            When any of
+            - announcementId does not refer to an existing announcement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: announcement ID does not refer to an existing announcement
+        '401':
+          description: When the given token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: Invalid token provided
+
+  /v2/announcements/create:
+    post:
+      tags:
+        - v2
+      summary: Create a new announcement (v2)
+      description: Given a title and description, create an announcement and return a corresponding announcement ID.
+      parameters:
+        - name: lab08snapnewstoken
+          in: header
+          description: secret token used to authenticate APIs
+          schema:
+            type: string
+            example: LAB08_SNAPNEWS_TOKEN_SECRET
+            description: Secret token for lab08_snapnews
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Title of the announcement
+                description:
+                  type: string
+                  description: Description of the announcement
+      responses:
+        '200':
+          description: Announcement created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcementId:
+                    type: integer
+                    example: 1
+        '400':
+          description: |
+            When any of
+            - title is an empty string, ""
+            - description is an empty string, ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Invalid title or description"
+        '401':
+          description: When the given token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: Invalid token provided
+  /v2/announcements/list:
+    get:
+      tags:
+        - v2
+      summary: List of all announcements (v2)
+      description: Return a list of announcements created, including information on their id, title, content and createdAt (UNIX Timestamp)
+      parameters:
+        - name: lab08snapnewstoken
+          in: header
+          description: secret token used to authenticate APIs
+          schema:
+            type: string
+            example: LAB08_SNAPNEWS_TOKEN_SECRET
+            description: Secret token for lab08_snapnews
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcement'
+        '401':
+          description: When the given token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: Invalid token provided
+  /v2/announcements/{announcementid}:
+    delete:
+      tags:
+        - v2
+      summary: Delete an announcement (v2)
+      description: Given an announcement ID, delete the corresponding announcement.
+      parameters:
+        - name: lab08snapnewstoken
+          in: header
+          description: secret token used to authenticate APIs
+          schema:
+            type: string
+            example: LAB08_SNAPNEWS_TOKEN_SECRET
+            description: Secret token for lab08_snapnews
+        - name: announcementid
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: ID of the announcement to delete
+            example: 0
+      responses:
+        '200':
+          description: Deleted announcement successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+        '400':
+          description: |
+            When any of
+            - announcementId does not refer to an existing announcement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: announcement ID does not refer to an existing announcement
+        '401':
+          description: When the given token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: Invalid token provided
+  /v1/announcements/{announcementid}/schedule:
+    delete:
+      tags:
+        - v1 new
+      summary: Schedule announcement deletion (v2)
+      description: Given an announcement ID, schedule the corresponding announcement for deletion
+      parameters:
+        - name: lab08snapnewstoken
+          in: header
+          description: secret token used to authenticate APIs
+          schema:
+            type: string
+            example: LAB08_SNAPNEWS_TOKEN_SECRET
+            description: Secret token for lab08_snapnews
+        - name: announcementid
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: ID of the announcement to schedule deletion for
+            example: 0
+        - name: secondsFromNow
+          in: query
+          required: true
+          schema:
+            type: integer
+            description: Seconds from now to schedule deletion
+            example: 2
+      responses:
+        '200':
+          description: Scheduled an announcement for deletion successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+        '400':
+          description: |
+            When any of
+            - announcementId does not refer to an existing announcement
+            - secondsFromNow is not strictly positive
+            - announcement is already scheduled for deletion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error Message
+                    example: secondsFromNow must be a strictly positive integer
+        '401':
+          description: When the given token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: Invalid token provided
+  /v1/announcements/{announcementid}/schedule/abort:
+    post:
+      tags:
+        - v1 new
+      summary: Abort scheduled deletion (v2)
+      description: Given an announcement ID, abort the scheduled deletion of the corresponding announcement
+      parameters:
+        - name: lab08snapnewstoken
+          in: header
+          description: secret token used to authenticate APIs
+          schema:
+            type: string
+            example: LAB08_SNAPNEWS_TOKEN_SECRET
+            description: Secret token for lab08_snapnews
+        - name: announcementid
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: ID of the announcement to abort deletion for
+            example: 0
+      responses:
+        '200':
+          description: Aborted a scheduled deletion successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+        '400':
+          description: |
+            When any of:
+            - announcementId does not refer to a valid announcement
+            - the announcement does not have any scheduled removals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: The announcement does not have any scheduled removals
+        '401':
+          description: When the given token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: Invalid token provided
+components:
+  schemas:
+    Announcement:
+      type: object
+      properties:
+        announcementId:
+          type: integer
+          description: ID of the announcement
+          example: 1234
+        title:
+          type: string
+          description: Title of the announcement
+          example: "The Nuggets blew a 20-point third-quarter"
+        description:
+          type: string
+          description: Description of the announcement
+          example: "n the span of 22 minutes, the Denver Nuggets' quest to repeat as champions disintegrated in stunning fashion. The Nuggets blew a 20-point third-quarter lead on their home floor to lose 98-90 in Game 7 of the Western Conference semifinals"
+        createdAt:
+          type: integer
+          description: Creation timestamp of the announcement (UNIX timestamp in seconds)
+          example: 1716293686
